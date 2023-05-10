@@ -19,7 +19,7 @@ impl Command for GetLogEntriesCommand {
 }
 
 /// Response from `command::get_log_entries`
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct LogEntries {
     /// Number of boot events which weren't logged (if buffer is full and audit enforce is set)
     pub unlogged_boot_events: u16,
@@ -39,7 +39,7 @@ impl Response for LogEntries {
 }
 
 /// Entry in the log response
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct LogEntry {
     /// Entry number
     pub item: u16,
@@ -73,7 +73,7 @@ pub struct LogEntry {
 pub const LOG_DIGEST_SIZE: usize = 16;
 
 /// Truncated SHA-256 digest of a log entry and the previous log digest
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct LogDigest(pub [u8; LOG_DIGEST_SIZE]);
 
 impl AsRef<[u8]> for LogDigest {
@@ -92,3 +92,74 @@ impl Debug for LogDigest {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::serialization::deserialize;
+
+    const DATA: [u8; 133] = [
+        0, 0, 0, 0, 4,
+        0, 1, 255,
+        255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 244, 100, 88,
+        173, 51, 247, 120, 239, 19, 99, 194,
+        163, 154, 37, 95, 160,
+        0, 2, 0,
+        0, 0, 255, 255, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 226, 191, 66,
+        113, 6, 162, 38, 178, 50, 169, 103,
+        216, 55, 101, 4, 30,
+        0, 3, 3,
+        0, 10, 255, 255, 0, 1, 255, 255,
+        131, 0, 0, 5, 85, 82, 98, 183,
+        36, 231, 60, 175, 60, 53, 195, 246,
+        45, 231, 164, 42, 219,
+        0, 4, 4,
+        0, 17, 255, 255, 0, 1, 255, 255,
+        132, 0, 0, 5, 86, 229, 163, 252,
+        211, 228, 178, 7, 135, 149, 191, 55,
+        231, 134, 255, 142, 40,
+    ];
+
+    #[test]
+    fn foo() {
+        let baz: [u8; 5] = [ 0, 0, 0, 0, 4, ];
+
+        let bar1: LogEntries = deserialize(&DATA).expect("fml1");
+        println!("bar1: {:#?}", bar1);
+
+        let bar2: LogEntries = deserialize(&baz).expect("fml2");
+        println!("bar2: {:#?}", bar1);
+
+        // because why would you implement PartialEq?
+        assert_ne!(bar1, bar2);
+    }
+
+    #[test]
+    fn log_entry_initial() {
+        let buf: [u8; 32] = [
+            0, 1, 255, 255, 255, 255, 255, 255,
+            255, 255, 255, 255, 255, 255, 255, 255,
+            244, 100, 88, 173, 51, 247, 120, 239,
+            19, 99, 194, 163, 154, 37, 95, 160,
+        ];
+
+        let entry: LogEntry = deserialize(&buf).expect("fml");
+        println!("entry: {:#?}", entry);
+    }
+
+    #[test]
+    fn log_entry_boot() {
+        let buf: [u8; 32] = [
+            0, 2, 0, 0, 0, 255, 255, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            226, 191, 66, 113, 6, 162, 38, 178,
+            50, 169, 103, 216, 55, 101, 4, 30,
+        ];
+
+        let entry: LogEntry = deserialize(&buf).expect("fml");
+        println!("entry: {:#?}", entry);
+    }
+ }
