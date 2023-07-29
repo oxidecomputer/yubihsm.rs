@@ -53,7 +53,7 @@ mod macros;
 #[macro_use]
 pub mod error;
 #[macro_use]
-mod serialization;
+pub mod serialization;
 
 pub mod algorithm;
 pub mod asymmetric;
