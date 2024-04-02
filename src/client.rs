@@ -146,6 +146,18 @@ impl Client {
         Ok(session::Guard::new(session_mutex_guard))
     }
 
+    /// Close the current session. If no sesison is open / exists then
+    /// this function will do nothing.
+    pub fn close_session(&mut self) -> Result<(), Error> {
+        let mut session = self.session.lock().expect("Poisoned lock");
+
+        if let Some(session) = session.take() {
+            Ok(session.close()?)
+        } else {
+            Ok(())
+        }
+    }
+
     /// Ping the HSM, ensuring we have a live connection and returning the
     /// end-to-end latency.
     pub fn ping(&self) -> Result<Duration, Error> {
