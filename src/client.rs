@@ -148,7 +148,7 @@ impl Client {
 
     /// Close the current session. If no sesison is open / exists then
     /// this function will do nothing.
-    pub fn close_session(&mut self) -> Result<(), Error> {
+    pub fn close_session(&self) -> Result<(), Error> {
         let mut session = self.session.lock().expect("Poisoned lock");
 
         if let Some(session) = session.take() {
